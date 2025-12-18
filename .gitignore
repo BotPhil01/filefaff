@@ -170,3 +170,8 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Makefiles 
+# USE PREMAKE INSTEAD
+**Makefile
+**.make
