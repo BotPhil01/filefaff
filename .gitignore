@@ -176,3 +176,8 @@ dkms.conf
 # USE PREMAKE INSTEAD
 **Makefile
 **.make
+
+# clangd
+compile_commands.json
+compile_commands/
+.cache/
