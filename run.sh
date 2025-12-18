@@ -13,7 +13,7 @@ build() {
 
 # used for compile_commands
 cc() {
-    if premake5 --version export-compile-commands; then
+    if premake5 --verbose export-compile-commands; then
         echo "compile-commands succeeded"
     fi
 }
