@@ -1,0 +1,13 @@
+[
+          {
+            "directory": "/home/ahx/filefaff",
+            "file": "/home/ahx/filefaff/src/server.c",
+            "command": "cc -MD -MP -DDEBUG -I/home/ahx/filefaff/include -g -o /home/ahx/filefaff/build/debug/server.o -MF /home/ahx/filefaff/build/debug/server.d -c /home/ahx/filefaff/src/server.c"
+          }
+,
+          {
+            "directory": "/home/ahx/filefaff",
+            "file": "/home/ahx/filefaff/src/test.c",
+            "command": "cc -MD -MP -DDEBUG -I/home/ahx/filefaff/include -g -o /home/ahx/filefaff/build/debug/test.o -MF /home/ahx/filefaff/build/debug/test.d -c /home/ahx/filefaff/src/test.c"
+          }
+]

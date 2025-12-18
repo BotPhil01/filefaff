@@ -6,6 +6,7 @@ project "filefaff"
     language "C"
     targetdir "bin/%{cfg.buildcfg}"
     objdir "build/%{cfg.buildcfg}"
+    includedirs { "./include" }
 
     files { "include/**.h", "src/**.c" }
 
