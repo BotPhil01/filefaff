@@ -3,12 +3,12 @@ workspace "filefaff"
 
 project "filefaff"
     kind "ConsoleApp"
-    language "C"
+    language "C++"
     targetdir "bin/%{cfg.buildcfg}"
     objdir "build/%{cfg.buildcfg}"
     includedirs { "./include" }
 
-    files { "include/**.h", "src/**.c" }
+    files { "include/**.h", "src/**.cpp" }
 
     filter "configurations:debug"
         defines { "DEBUG" }
