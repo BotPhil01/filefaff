@@ -1,10 +1,9 @@
 workspace "filefaff"
      configurations { "debug", "release" }
 
-project "filefaff"
     kind "ConsoleApp"
     language "C++"
-    targetdir "bin/%{cfg.buildcfg}"
+    cppdialect "C++20"
     objdir "build/%{cfg.buildcfg}"
     includedirs { "./include" }
 
@@ -17,3 +16,9 @@ project "filefaff"
     filter "configurations:release"
         defines { "NDEBUG" }
         optimize "On"
+
+project "filefaffserver"
+    removefiles { "src/client.cpp" }
+
+project "filefaffclient"
+    removefiles { "src/server.cpp" }
