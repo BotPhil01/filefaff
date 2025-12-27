@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <string>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -12,3 +13,13 @@ typedef int32_t i32;
 typedef int64_t i64;
 
 typedef i32 file_desc;
+
+typedef enum class commandhead {
+    PORT,
+    PASV,
+} commandhead;
+
+typedef struct command {
+    commandhead header;
+    std::string data;
+} command;
