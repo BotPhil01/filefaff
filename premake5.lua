@@ -8,6 +8,9 @@ workspace "filefaff"
     includedirs { "./include" }
 
     files { "include/**.h", "src/**.cpp" }
+    removefiles { "src/client.cpp" }
+    removefiles { "src/server.cpp" }
+    removefiles { "src/test.cpp" }
 
     filter "configurations:debug"
         defines { "DEBUG" }
@@ -18,7 +21,10 @@ workspace "filefaff"
         optimize "On"
 
 project "filefaffserver"
-    removefiles { "src/client.cpp" }
+    files { "src/server.cpp" }
 
 project "filefaffclient"
-    removefiles { "src/server.cpp" }
+    files { "src/client.cpp" }
+
+project "filefafftest"
+    files { "src/test.cpp" }

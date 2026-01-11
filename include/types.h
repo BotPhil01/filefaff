@@ -1,6 +1,6 @@
 #pragma once
+#include <sstream>
 #include <stdint.h>
-#include <string>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -12,14 +12,11 @@ typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
 
-typedef i32 file_desc;
+typedef struct message {
+    typedef enum class command {
+        GET
+    } command;
 
-typedef enum class commandhead {
-    PORT,
-    PASV,
-} commandhead;
-
-typedef struct command {
-    commandhead header;
-    std::string data;
-} command;
+    command cmd;
+    std::stringstream body;
+} message;

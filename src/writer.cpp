@@ -1,7 +1,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <string_view>
 #include <unistd.h>
 
 const size_t BUF_SIZE = 1024;

@@ -1,0 +1,6 @@
+Create socket success 4
+socket constructor called for 4 on port 42069
+socket connect success on 4
+socket write success on 4
+socket destructor called socket destructor called for 4 on port 42069
+socket close success on 4
