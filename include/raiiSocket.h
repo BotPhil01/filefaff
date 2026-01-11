@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <types.h>
 #include <cerrno>
 #include <set>
@@ -42,6 +43,7 @@ namespace ff
             bool connectShouldClose() const;
 
         public:
+            static const std::size_t READBUFSIZE = 1048;
             raiiSocket(const u16 port);
 
             // no copies

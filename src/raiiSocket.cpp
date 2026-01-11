@@ -125,7 +125,7 @@ namespace ff
 
     std::string raiiSocket::read()
     {
-        std::string buf(1048, 0);
+        std::string buf(raiiSocket::READBUFSIZE, 0);
         const ssize_t ret = ::read(fileDesc, &buf[0], buf.size());
         if (ret == -1) {
             // TODO fix later
@@ -199,7 +199,7 @@ namespace ff
         if (fileDescOther == -1) {
             throw std::runtime_error("fileDescOther not initialised");
         }
-        std::string buf(1048, 0);
+        std::string buf(raiiSocket::READBUFSIZE, 0);
         const ssize_t ret = ::read(fileDescOther, &buf[0], buf.size());
         if (ret == -1) {
             // TODO fix later
