@@ -1,19 +1,7 @@
 Log test
-startline
+choosing parser
 parsing startLine HTTP/1.1 200 Success
-headers
+
+choosing parser
 parsing headers Access-Control-Allow-Origin: *
-trimming msg Access-Control-Allow-Origin new Access-Control-Allow-Origin
-trimming msg  * new *
-headers
-parsing headers Connection:Keep-Alive
-trimming msg Connection new Connection
-trimming msg Keep-Alive new Keep-Alive
-headers
-parsing headers Content-Length:7
-trimming msg Content-Length new Content-Length
-trimming msg 7 new 7
-headers
-parsing headers 
-body
-parsing bodycontent
+trimWhiteSpace msg{Access-Control-Allow-Orig  } new {

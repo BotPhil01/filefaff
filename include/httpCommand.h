@@ -143,27 +143,24 @@ namespace ff {
                         const std::size_t splitIndex = rawBytes.find(EOL);
                         const std::string currLine = rawBytes.substr(0, splitIndex);
                         rawBytes = rawBytes.substr(splitIndex + EOL.size());
+                        LOG << "choosing parser\n";
                         switch (state) {
-                            LOG << "parsing ";
                             case (messageState::EMPTY):
-                                LOG << "startline\n";
                                 parseStartLine(currLine);
                                 state = messageState::STARTDONE;
                                 break;
                             case (messageState::STARTDONE):
-                                LOG << "headers\n";
                                 if(parseHeaders(currLine)) {
                                     state = messageState::HEADERSDONE;
                                 }
                                 break;
                             case (messageState::HEADERSDONE):
-                                LOG << "body\n";
                                 parseBody(currLine);
                                 break;
                             default:
                                 throw std::runtime_error("Invalid state reached");
                         }
-
+                        LOG << "\n";
                     }
                     if (rawBytes.empty()) {
                         return {};
@@ -258,7 +255,7 @@ namespace ff {
 
                 void parseBody(std::string currLine) 
                 {
-                    LOG << "parsing body" << currLine << "\r\n";
+                    LOG << "parsing body {" << currLine << "}\n";
                     if (currLine == "" && bodySizeLeft != 0) {
                         throw std::runtime_error("body ended but more expected");
                     }
@@ -272,19 +269,29 @@ namespace ff {
                 }
 
                 void trimEOL(std::string& msg) {
-                    LOG << "trimming msg " << msg << " new ";
+                    LOG << "trimEOL: msg {" << msg << "} new {";
                     const size_t EOLIndex = msg.find(EOL);
                     msg = msg.substr(0, EOLIndex);
-                    LOG << msg << "\n";
+                    LOG << msg << "}\n";
                 }
                 void trimWhiteSpace(std::string& msg) 
                 {
-                    LOG << "trimming msg " << msg << " new ";
+                    LOG << "trimWhiteSpace msg{" << msg << "} new {";
                     auto f = [](unsigned char it) {
                         return !std::isspace(it);
                     };
                     msg.erase(msg.begin(), std::find_if(msg.begin(), msg.end(), f));
-                    LOG << msg << "\n";
+                    auto rbeg = msg.rbegin()++;
+                    const auto original = rbeg;
+                    while (*rbeg == ' ') {
+                        rbeg++;
+                    }
+                    using itertype = decltype(rbeg);
+                    // todo fix this
+                    msg = msg.substr(0, msg.size() - std::distance(original, rbeg));
+
+                    LOG << msg << "}\n";
+
                 }
         };
 
