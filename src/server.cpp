@@ -1,4 +1,4 @@
-#include "socket.h"
+#include "raiiSocket.h"
 #include <cerrno>
 #include <unistd.h>
 #include <iostream>
@@ -10,7 +10,7 @@
 // socket identified via integer hence can pass it around like nobody's business
 
 i32 main() {
-    ff::serverSocket s(port);
+    ff::serverRaiiSocket s{port};
     s.bind();
     std::cout << "bound" << std::endl;
     s.listen(1);

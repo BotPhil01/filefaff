@@ -38,13 +38,17 @@ namespace ff
                 {
                     // read line
                     // process line
+                    message m;
+                    std::string leftOver;
                     while (true) {
-                        const std::string bytes = clientRaiiSocket::read();
-                        processLine(bytes);
+                        const std::string bytes =
+                            clientRaiiSocket::read() + leftOver;
+                        leftOver = m.modify(bytes).value_or("");
                         if (bytes.size() != clientRaiiSocket::READBUFSIZE) {
                             break;
                         }
                     }
+                    return m;
                 }
 
         };

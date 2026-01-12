@@ -23,7 +23,6 @@ namespace
         LOG << "Create raiiSocket success " << fd << "\n";
         return fd;
     }
-
 }
 
 namespace ff
@@ -46,9 +45,6 @@ namespace ff
             std::set<errnoType> yesSet,
             std::set<errnoType> noSet) const 
     {
-        // std::set<errnoType> yesSet(yesErrnos);
-        // std::set<errnoType> noSet(noErrnos);
-
         if (yesSet.contains(errno)) 
         {
             LOG << operation << "close determination success close=true"
@@ -162,10 +158,10 @@ namespace ff
 
     void serverRaiiSocket::bind() 
     {
-        const sockaddr_in address{ 
+        sockaddr_in address{ 
             .sin_family = AF_INET,
                 .sin_port = htons(port),
-                .sin_addr = INADDR_ANY 
+                .sin_addr = static_cast<struct in_addr>(INADDR_ANY)
         };
         if (::bind(fileDesc, (struct sockaddr *)&address, sizeof(address))) 
         {
@@ -213,7 +209,7 @@ namespace ff
         const sockaddr_in address{ 
             .sin_family = AF_INET,
                 .sin_port = htons(port),
-                .sin_addr = INADDR_ANY 
+                .sin_addr = static_cast<struct in_addr>(INADDR_ANY)
         };
         const int ret = ::connect(fileDesc, (struct sockaddr*) &address,
                 sizeof(address));

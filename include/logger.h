@@ -1,13 +1,12 @@
 #pragma once
 #include <iostream>
 #include <mutex>
-#include <filesystem>
 #include <fstream>
 
 class logger {
     private:
         inline static std::mutex accessMutex;
-        static std::ofstream stream;
+        inline static std::ofstream stream{"log/log.txt"};
 
         logger() = default;
         
@@ -16,6 +15,7 @@ class logger {
         logger& operator=(logger& copy) = delete;
 
         static logger& getInstance() {
+            // static std::ofstream stream("log/log.txt");
             static logger instance;
             return instance;
         }

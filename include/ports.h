@@ -1,4 +1,4 @@
 #pragma once
 #include <types.h>
 
-extern const int port;
+extern const u16 port;

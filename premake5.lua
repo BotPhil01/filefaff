@@ -3,7 +3,7 @@ workspace "filefaff"
 
     kind "ConsoleApp"
     language "C++"
-    cppdialect "C++20"
+    cppdialect "C++23"
     objdir "build/%{cfg.buildcfg}"
     includedirs { "./include" }
 

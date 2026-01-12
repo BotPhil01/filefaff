@@ -1,5 +1,5 @@
 // TODO implement small buffer partial read partial write
-#include "socket.h"
+#include "raiiSocket.h"
 #include <writer.h>
 #include <types.h>
 #include <fcntl.h>
@@ -13,7 +13,7 @@
 const u16 PORT = 42069;
 
 i32 main() {
-    ff::clientSocket s(PORT);
+    ff::clientRaiiSocket s{PORT};
     s.connect();
     sleep(5);
     s.write("hello world!");

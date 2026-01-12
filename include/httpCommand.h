@@ -1,10 +1,11 @@
 #include <algorithm>
+#include <cctype>
 #include <cstddef>
 #include <stdexcept>
 #include <string_view>
 #include <types.h>
 #include <unordered_map>
-#include <map>
+#include <logger.h>
 #include <string>
 #include <optional>
 #include <format>
@@ -21,22 +22,43 @@ namespace ff {
         };
 
         namespace {
-            const std::map<command, std::string> cmdStrMap{
+            using cmdStrMap_t = std::unordered_map<command, std::string>;
+            using strCmdMap_t = std::unordered_map<std::string, command>;
+
+            const strCmdMap_t cmdStrMapConversion(const cmdStrMap_t map) 
+                {
+                strCmdMap_t ret;
+                auto f = [&ret](auto it) {
+                    ret.emplace(it.second, it.first);
+                };
+                std::for_each(map.begin(), map.end(), f);
+                return ret;
+            }
+
+            const cmdStrMap_t cmdStrMap{
                 {command::NONE, "NONE"},
                     {command::GET, "GET"}
             };
 
-            const u8 noRespCode{0};
-            using std::operator""sv;
+            const strCmdMap_t strCmdMap = cmdStrMapConversion(cmdStrMap);
+
+            const u16 noRespCode{0};
             const std::string defaultUrl{};
+
+            enum class messageState {
+                EMPTY,
+                STARTDONE,
+                HEADERSDONE,
+                BODYDONE
+            };
         }
 
         struct startLine {
-            const command command;
-            const std::string url;
-            const u8 version{11};
-            const u8 respCode;
-            const std::string reason;
+            command command;
+            std::string url;
+            u8 version{11};
+            u16 respCode;
+            std::string reason;
 
             startLine() :
                 command{command::NONE}, url{""}, respCode{noRespCode}, reason{}
@@ -92,61 +114,185 @@ namespace ff {
         };
 
         using body = std::string;
-
         // readonly struct
         struct message {
-            const startLine startLine;
-            const headers headers;
-            const body body;
-            std::string string() const {
-                return std::string{startLine.string() +
-                    headers.string() + EOL + 
-                    body + EOL};
-            }
-            // returns message and optional leftover bytes
-            using ostring = std::optional<std::string>;
-            std::pair<struct message, ostring> modify(std::string rawBytes) 
-            {
-                while (true) 
+            private: 
+                messageState state = messageState::EMPTY;;
+                uint32_t bodySizeLeft = 0;
+            public:
+                startLine startLine;
+                headers headers;
+                body body;
+
+                message() = default;
+                message(struct startLine s, struct headers h, ff::http::body b);
+                
+                std::string string() const {
+                    return std::string{startLine.string() +
+                        headers.string() + EOL + 
+                            body + EOL};
+                }
+                // returns message and optional leftover bytes
+                using ostring = std::optional<std::string>;
+                [[nodiscard("Optional bytes may be available")]]
+                    ostring modify(std::string rawBytes) 
                 {
-                    if (startLine.empty()) 
+                    bool headersSet;
+                    while (rawBytes.contains(EOL)) 
                     {
-                        std::size_t splitIndex = rawBytes.find(EOL) + EOL.size();
-                        if (splitIndex == rawBytes.npos + EOL.size()) {
-                            return std::make_pair(*this, rawBytes);
-                        }
-
-                        // split str
+                        const std::size_t splitIndex = rawBytes.find(EOL);
                         const std::string currLine = rawBytes.substr(0, splitIndex);
-                        rawBytes = rawBytes.substr(splitIndex);
-
-                        // parse currLine
-                        if (currLine.starts_with("HTTP")) {
-                            // response
-                            std::size_t subSplitIndex = currLine.find(' ');
-                            std::string version = currLine.substr(0, subSplitIndex - 1);
-                            subSplitIndex = currLine.find(' ', subSplitIndex);
-                            std::string statusCode = currLine.substr(0, subSplitIndex - 1);
-                            std::string reason = currLine.substr(subSplitIndex + 1);
-                            // map strings to commands status codes and reasons
-                        } else {
-                            std::size_t subSplitIndex = currLine.find(' ');
-                            std::string command = currLine.substr(0, subSplitIndex - 1);
-                            subSplitIndex = currLine.find(' ', subSplitIndex);
-                            std::string url = currLine.substr(0, subSplitIndex - 1);
-                            std::string version = currLine.substr(subSplitIndex + 1);
-                            // map command to enum version to version
+                        rawBytes = rawBytes.substr(splitIndex + EOL.size());
+                        switch (state) {
+                            LOG << "parsing ";
+                            case (messageState::EMPTY):
+                                LOG << "startline\n";
+                                parseStartLine(currLine);
+                                state = messageState::STARTDONE;
+                                break;
+                            case (messageState::STARTDONE):
+                                LOG << "headers\n";
+                                if(parseHeaders(currLine)) {
+                                    state = messageState::HEADERSDONE;
+                                }
+                                break;
+                            case (messageState::HEADERSDONE):
+                                LOG << "body\n";
+                                parseBody(currLine);
+                                break;
+                            default:
+                                throw std::runtime_error("Invalid state reached");
                         }
+
+                    }
+                    if (rawBytes.empty()) {
+                        return {};
+                    }
+                    return rawBytes;
+                }
+            private:
+                void parseStartLine(const std::string currLine) 
+                {
+                    LOG << "parsing startLine " << currLine << "\r\n";
+                    // parse currLine
+                    if (currLine.starts_with("HTTP")) 
+                    {
+                        // response
+                        std::size_t subSplitIndex{currLine.find(' ')};
+                        const std::string version{
+                            currLine.substr(0, subSplitIndex)
+                        };
+                        subSplitIndex = currLine.find(' ', subSplitIndex + 1);
+                        size_t beginIndex{version.size() + 1};
+                        const std::string statusCode{
+                            currLine.substr(beginIndex, subSplitIndex - beginIndex)};
+
+                        const size_t eolIndex{currLine.find(EOL)};
+                        beginIndex = subSplitIndex + 1;
+                        const std::string reason{
+                            currLine.substr(beginIndex, eolIndex - beginIndex)
+                        };
+                        if (!version.contains("1.1")) {
+                            LOG << "ERROR " << version << "\n";
+                            throw std::runtime_error(
+                                    "HTTP version not supported");
+                        }
+
+                        startLine.respCode = static_cast<u16>(stoi(statusCode));
+                        startLine.reason = reason;
+                    } else 
+                    {
+                        // request
+                        std::size_t subSplitIndex{currLine.find(' ')};
+                        const std::string command{
+                            currLine.substr(0, subSplitIndex + 1)
+                        };
+                        subSplitIndex = currLine.find(' ', subSplitIndex);
+                        size_t beginIndex{command.size() + 1};
+                        const std::string url{
+                            currLine.substr(beginIndex, subSplitIndex - beginIndex)
+                        };
+
+                        const size_t eolIndex{currLine.find(EOL)};
+                        beginIndex = subSplitIndex + 1;
+                        const std::string version{
+                            currLine.substr(beginIndex, eolIndex - beginIndex)
+                        };
+
+                        if (!version.contains("1.1")) {
+                            // this is unsafe
+                            LOG << "ERROR " << version << "\n";
+                            throw std::runtime_error(
+                                    "HTTP version not supported");
+                        }
+
+                        startLine.command = strCmdMap.at(command);
+                        startLine.url = url;
                     }
                 }
-            }
+
+                bool parseHeaders(const std::string currLine) 
+                {
+                    LOG << "parsing headers " << currLine << "\r\n";
+                    if (!currLine.contains(":")) {
+                        if (currLine == "") {
+                            return true;
+                        }
+                        throw std::runtime_error("Invalid header being parsed");
+
+                    }
+                    const size_t splitIndex = currLine.find(":");
+                    std::string key = currLine.substr(0, splitIndex);
+                    std::string value = currLine.substr(splitIndex+1);
+                    
+                    // trim whitespace from key and value
+                    trimWhiteSpace(key);
+                    trimWhiteSpace(value);
+                    if (key == "Content-Length") {
+                        bodySizeLeft = static_cast<uint32_t>(stoi(value));
+                    }
+
+                    headers.values.emplace(key, value);
+                    return false;
+                }
+
+                void parseBody(std::string currLine) 
+                {
+                    LOG << "parsing body" << currLine << "\r\n";
+                    if (currLine == "" && bodySizeLeft != 0) {
+                        throw std::runtime_error("body ended but more expected");
+                    }
+
+                    currLine = currLine.substr(0, currLine.find("\r\n"));
+                    if (currLine.size() > bodySizeLeft) {
+                        throw std::runtime_error("body line too big");
+                    }
+                    body += currLine;
+                    bodySizeLeft = bodySizeLeft - currLine.size();
+                }
+
+                void trimEOL(std::string& msg) {
+                    LOG << "trimming msg " << msg << " new ";
+                    const size_t EOLIndex = msg.find(EOL);
+                    msg = msg.substr(0, EOLIndex);
+                    LOG << msg << "\n";
+                }
+                void trimWhiteSpace(std::string& msg) 
+                {
+                    LOG << "trimming msg " << msg << " new ";
+                    auto f = [](unsigned char it) {
+                        return !std::isspace(it);
+                    };
+                    msg.erase(msg.begin(), std::find_if(msg.begin(), msg.end(), f));
+                    LOG << msg << "\n";
+                }
         };
 
         struct get : message {
             using message::message;
             get(const std::string url, const ::ff::http::headers headers, const ::ff::http::body body) :
                 message{{::ff::http::command::GET, url}, headers, body}
-                {}
+            {}
         };
 
         struct response : message {
