@@ -1,3 +1,3 @@
 #include <logger.h>
 
-logger& LOG = logger::getInstance();
+logger& LOG = logger::getInstance(LOGMODE::NONE);

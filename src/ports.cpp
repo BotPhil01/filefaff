@@ -1,3 +1,3 @@
 #include <ports.h>
 #include <types.h>
-const u16 port = 42069;
+const u16 PORT = 42069;

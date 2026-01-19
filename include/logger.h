@@ -2,11 +2,30 @@
 #include <iostream>
 #include <mutex>
 #include <fstream>
+#include <string_view>
+#include <unordered_map>
+
+enum class LOGMODE {
+    NONE,
+    CLIENT,
+    SERVER,
+    TEST
+};
+
+namespace {
+    using namespace std::string_view_literals;
+    const std::unordered_map<LOGMODE, std::string> fileMappings {
+        {LOGMODE::NONE, "log"},
+        {LOGMODE::CLIENT, "client"},
+        {LOGMODE::SERVER, "server"},
+        {LOGMODE::TEST, "test"},
+    };
+}
 
 class logger {
     private:
         inline static std::mutex accessMutex;
-        inline static std::ofstream stream{"log/log.txt"};
+        inline static std::ofstream stream{"log/.log"};
 
         logger() = default;
         
@@ -14,8 +33,8 @@ class logger {
         logger(logger& copy) = delete;
         logger& operator=(logger& copy) = delete;
 
-        static logger& getInstance() {
-            // static std::ofstream stream("log/log.txt");
+        inline static logger& getInstance(const LOGMODE m) {
+            stream = std::ofstream{"log/" + fileMappings.at(m) + ".log"};
             static logger instance;
             return instance;
         }

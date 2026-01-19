@@ -21,6 +21,13 @@ cc() {
     ln -sf $SCRIPT_DIR/compile_commands.json $SCRIPT_DIR/compile_commands/debug.json
 }
 
+clean() {
+    cd $SCRIPT_DIR
+    if make clean; then
+        echo "clean succeeded"
+    fi
+}
+
 usage() {
     echo "./run.sh usage: build|cc"
 }
@@ -33,6 +40,9 @@ if [[ $1 =~ "build" ]]; then
 elif [[ $1 =~ "cc" ]]; then
     echo "./run.sh selected cc"
     cc
+elif [[ $1 =~ "clean" ]]; then
+    echo "./run.sh selected clean"
+    clean
 else
     usage
 fi

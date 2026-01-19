@@ -34,7 +34,7 @@ namespace ff
         {
             ::close(fileDesc);
         }
-        throw std::runtime_error("raiiSocket failed to perform operation");
+        throw std::runtime_error("raiiSocket failed to perform operation" + operation);
     }
 
     void raiiSocket::operationSuccess(std::string operation) {
@@ -165,7 +165,13 @@ namespace ff
         };
         if (::bind(fileDesc, (struct sockaddr *)&address, sizeof(address))) 
         {
-            sockErrLogThrow("bind", bindShouldClose());
+            LOG << "bind failed attempting fallback " << port+1 << "\n";
+            address.sin_port = htons(port+1);
+
+            if (::bind(fileDesc, (struct sockaddr *)&address, sizeof(address))) 
+            {
+                sockErrLogThrow("bind", bindShouldClose());
+            }
         }
         operationSuccess("bind");
     }
@@ -201,20 +207,38 @@ namespace ff
             // TODO fix later
             opErrShouldClose("read", {}, {});
         }
+        operationSuccess("read");
         return buf;
+    }
+
+    void serverRaiiSocket::write(std::string msg)
+    {
+        const ssize_t ret = ::write(fileDescOther, &msg[0], msg.size());
+        if (ret == -1) {
+            opErrShouldClose("write", {}, {});
+        }
+        operationSuccess("write");
+        return;
     }
 
     void clientRaiiSocket::connect() 
     {
-        const sockaddr_in address{ 
+        sockaddr_in address{ 
             .sin_family = AF_INET,
                 .sin_port = htons(port),
                 .sin_addr = static_cast<struct in_addr>(INADDR_ANY)
         };
-        const int ret = ::connect(fileDesc, (struct sockaddr*) &address,
-                sizeof(address));
-        if (ret) {
-            sockErrLogThrow("connect", connectShouldClose());
+        sockaddr* addressPointer = static_cast<sockaddr*>(static_cast<void*>(&address));
+        if (::connect(fileDesc, addressPointer, sizeof(address))) 
+        {
+            
+            LOG << "connect failed attempting fallback " << port+1 << "\n";
+            address.sin_port = htons(port+1);
+
+            if (::connect(fileDesc, addressPointer, sizeof(address))) 
+            {
+                sockErrLogThrow("connect", bindShouldClose());
+            }
         }
         operationSuccess("connect");
     }

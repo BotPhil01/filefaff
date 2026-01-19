@@ -25,7 +25,7 @@ namespace ff
             const int fileDesc;
             int fileDescOther;
             const u16 port;
-            bool closed;
+            bool closed = false;
 
             void sockErrLogThrow(std::string operation, bool close = false);
 
@@ -58,13 +58,19 @@ namespace ff
 
             virtual std::string read();
             
-            void write(std::string msg);
+            virtual void write(std::string msg);
 
             void close();
     };
 
     class serverRaiiSocket : public ff::raiiSocket {
         public:
+            serverRaiiSocket(const u16 port) :
+                ff::raiiSocket(port)
+            {
+                logger& LOG = logger::getInstance(LOGMODE::SERVER);
+            }
+
             using ff::raiiSocket::raiiSocket;
             void bind();
 
@@ -73,11 +79,16 @@ namespace ff
             void accept();
 
             virtual std::string read() override;
+            virtual void write(std::string msg) override;
     };
 
     class clientRaiiSocket : public ff::raiiSocket {
         public:
-            using ff::raiiSocket::raiiSocket;
+            clientRaiiSocket(const u16 port) :
+                ff::raiiSocket(port)
+            {
+                logger& LOG = logger::getInstance(LOGMODE::CLIENT);
+            }
             void connect();
     };
 }
